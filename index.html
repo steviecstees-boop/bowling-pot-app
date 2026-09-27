@@ -1,0 +1,35 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bowling Pot</title><style>
+body{font-family:Arial,sans-serif;background:#0b1020;color:white;margin:0;padding:14px}h1{margin:0}.sub{color:#b7c0d4;margin:4px 0 14px}
+.card{background:#151d31;border:1px solid #34415f;border-radius:12px;padding:12px;margin-bottom:12px;overflow:auto}
+input,button{font-size:16px;padding:9px;border-radius:7px;border:1px solid #405071}input{background:#0d1425;color:white;max-width:100%}
+.top{display:grid;grid-template-columns:1fr 1fr;gap:8px}.sum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.g{background:#0d1425;padding:10px;border-radius:9px}.pot{font-size:20px;font-weight:bold;color:#ffd166}.win{color:#52d273;font-size:13px}
+table{border-collapse:collapse;width:100%;min-width:720px}th,td{border:1px solid #34415f;padding:6px;text-align:center}th{background:#202b45}td:nth-child(2){text-align:left}
+.name{width:150px}.lane{width:55px}.score{width:65px}input[type=checkbox]{width:21px;height:21px}
+button{background:#2b3a5e;color:white;font-weight:bold}.save{background:#52d273;color:#08130b}.danger{background:#762f36}.buttons{display:flex;gap:8px;flex-wrap:wrap}
+@media(max-width:600px){.sum,.top{grid-template-columns:1fr}}
+</style></head><body>
+<h1>🎳 Bowling Pot</h1><div class="sub">$5 per game • 3 games • ties split the pot</div>
+<div class="card top"><label>Date<br><input id="date" type="date"></label><label>Bowling Center / League<br><input id="center"></label></div>
+<div class="card sum"><div class="g"><b>Game 1</b><div id="pot1" class="pot">$0 pot</div><div id="win1" class="win">No scores yet</div></div>
+<div class="g"><b>Game 2</b><div id="pot2" class="pot">$0 pot</div><div id="win2" class="win">No scores yet</div></div>
+<div class="g"><b>Game 3</b><div id="pot3" class="pot">$0 pot</div><div id="win3" class="win">No scores yet</div></div></div>
+<div class="card"><table><thead><tr><th>#</th><th>Bowler</th><th>Lane</th><th>Paid / Game 1</th><th>Paid / Game 2</th><th>Paid / Game 3</th></tr></thead><tbody id="rows"></tbody></table></div>
+<div class="card buttons"><button class="save" id="save">Save Bowling Night</button><button id="all">Mark All Paid</button><button class="danger" id="clear">New / Clear</button></div>
+<div class="card"><b>Saved Bowling Nights</b><div id="history" style="margin-top:8px;color:#b7c0d4"></div></div>
+<script>
+const K='bp-current-v1',H='bp-history-v1',PRICE=5,N=20,rows=document.getElementById('rows');
+for(let i=0;i<N;i++){let tr=document.createElement('tr');tr.innerHTML=`<td>${i+1}</td><td><input class="name" placeholder="Bowler name"></td><td><input class="lane" placeholder="Lane"></td>${[1,2,3].map(g=>`<td><input type="checkbox" class="p${g}"> <input type="number" min="0" max="300" class="score s${g}" placeholder="Score"></td>`).join('')}`;rows.appendChild(tr)}
+date.value=new Date().toISOString().slice(0,10);
+function data(){return{date:date.value,center:center.value,b:[...rows.children].map(r=>({n:r.querySelector('.name').value,l:r.querySelector('.lane').value,g:[1,2,3].map(x=>({p:r.querySelector('.p'+x).checked,s:r.querySelector('.s'+x).value}))}))}}
+function set(d){if(!d)return;date.value=d.date||date.value;center.value=d.center||'';[...rows.children].forEach((r,i)=>{let b=(d.b||[])[i]||{};r.querySelector('.name').value=b.n||'';r.querySelector('.lane').value=b.l||'';[1,2,3].forEach((x,j)=>{let q=(b.g||[])[j]||{};r.querySelector('.p'+x).checked=!!q.p;r.querySelector('.s'+x).value=q.s||''})});calc()}
+function cash(x){return '$'+x.toFixed(2).replace('.00','')}
+function calc(){let d=data();[0,1,2].forEach(j=>{let paid=d.b.filter(b=>b.g[j].p),pot=paid.length*PRICE;document.getElementById('pot'+(j+1)).textContent=cash(pot)+' pot';let s=paid.filter(b=>b.n&&b.g[j].s!=='');let w=document.getElementById('win'+(j+1));if(!s.length){w.textContent='No paid scores yet';return}let hi=Math.max(...s.map(b=>+b.g[j].s)),ws=s.filter(b=>+b.g[j].s===hi);w.textContent=ws.map(b=>b.n).join(' & ')+' — '+hi+' • '+cash(pot/ws.length)+' each'});localStorage.setItem(K,JSON.stringify(d))}
+function hist(){let h=JSON.parse(localStorage.getItem(H)||'[]');history.innerHTML=h.length?h.map(x=>`<p><b>${x.date}${x.center?' • '+x.center:''}</b><br>${x.w.join(' | ')}</p>`).join(''):'No saved nights yet.'}
+document.addEventListener('input',calc);document.addEventListener('change',calc);
+all.onclick=()=>{document.querySelectorAll('input[type=checkbox]').forEach(x=>x.checked=true);calc()}
+clear.onclick=()=>{if(confirm('Clear and start a new bowling night?')){localStorage.removeItem(K);location.reload()}}
+save.onclick=()=>{let d=data(),w=[0,1,2].map(j=>{let p=d.b.filter(b=>b.g[j].p&&b.n&&b.g[j].s!=='');if(!p.length)return 'G'+(j+1)+': —';let hi=Math.max(...p.map(b=>+b.g[j].s));return 'G'+(j+1)+': '+p.filter(b=>+b.g[j].s===hi).map(b=>b.n).join(' & ')+' ('+hi+')'}),h=JSON.parse(localStorage.getItem(H)||'[]');h.unshift({date:d.date,center:d.center,w});localStorage.setItem(H,JSON.stringify(h.slice(0,30)));hist();alert('Bowling night saved')}
+try{set(JSON.parse(localStorage.getItem(K)||'null'))}catch(e){} calc();hist();
+</script></body></html>
