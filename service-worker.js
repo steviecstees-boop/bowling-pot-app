@@ -1,4 +1,4 @@
-const CACHE_NAME = "bowling-pot-v1";
+const CACHE_NAME = "bowling-pot-v2";
 
 const FILES_TO_CACHE = [
   "./",
