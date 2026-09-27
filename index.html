@@ -32,4 +32,8 @@ all.onclick=()=>{document.querySelectorAll('input[type=checkbox]').forEach(x=>x.
 clear.onclick=()=>{if(confirm('Clear and start a new bowling night?')){localStorage.removeItem(K);location.reload()}}
 save.onclick=()=>{let d=data(),w=[0,1,2].map(j=>{let p=d.b.filter(b=>b.g[j].p&&b.n&&b.g[j].s!=='');if(!p.length)return 'G'+(j+1)+': —';let hi=Math.max(...p.map(b=>+b.g[j].s));return 'G'+(j+1)+': '+p.filter(b=>+b.g[j].s===hi).map(b=>b.n).join(' & ')+' ('+hi+')'}),h=JSON.parse(localStorage.getItem(H)||'[]');h.unshift({date:d.date,center:d.center,w});localStorage.setItem(H,JSON.stringify(h.slice(0,30)));hist();alert('Bowling night saved')}
 try{set(JSON.parse(localStorage.getItem(K)||'null'))}catch(e){} calc();hist();
+</script><script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./service-worker.js');
+}
 </script></body></html>
